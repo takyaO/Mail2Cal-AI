@@ -52,6 +52,15 @@ async function initOptions() {
     if (settings.username) document.getElementById("username").value = settings.username;
     if (settings.password) document.getElementById("password").value = settings.password;
 
+      const resetBtn = document.getElementById("resetPromptButton");
+
+      resetBtn.addEventListener("click", () => {
+	  if (confirm(browser.i18n.getMessage("confirmResetPrompt"))) {
+	      const defaultPrompt = browser.i18n.getMessage("defaultAiPrompt");
+	      document.getElementById("ollamaPrompt").value = defaultPrompt;
+	  }
+      });
+      
   } catch (error) {
     console.error("Failed to load settings:", error);
     // エラーメッセージも辞書化する場合は browser.i18n.getMessage("errorLoadSettings")

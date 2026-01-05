@@ -2,54 +2,112 @@
   "extensionName": {
     "message": "Mail2Cal-AI"
   },
-    "extensionDescription": {
-	"message": "Extracts events from emails using local AI (Ollama) and registers them to CalDAV."
-    } ,
-    "contextMenuTitle": {
-	"message": "Mail to Calendar AI"
-    },
-    "registerButton": {
-	"message": "Register to Calendar"
-    },
-  "saveSuccess": { "message": "Settings saved successfully." },
-  "saveError": { "message": "Failed to save. Please check the JSON format of the calendar list." },
-    "errorLoadSettings": { "message": "Failed to load initial settings. Please try reloading the add-on." },
+  "extensionDescription": {
+    "message": "Extracts events from emails using local AI (Ollama) and registers them to CalDAV."
+  },
   "contextMenuTitle": {
     "message": "Mail to Calendar AI"
   },
-  "noCalendarWarning": { "message": "Please register a calendar in settings" },
-  "registeringStatus": { "message": "Registering..." },
-  "registerSuccess": { "message": "Successfully registered!" },
-  "registerFail": { "message": "Registration failed" },
-    "communicationError": { "message": "A communication error occurred" },
-  "extensionName": { "message": "Mail2Cal-AI" },
-  "extensionDescription": { "message": "Extracts events from emails using local AI." },
-  "contextMenuTitle": { "message": "Mail to Calendar AI" },
-  "optionsPageTitle": { "message": "Mail2Cal Settings" },
-  "popupPageTitle": { "message": "Confirm Event" },
-  "popupHeader": { "message": "📅 Confirm Event" },
-  "labelTitle": { "message": "Title" },
-  "labelStart": { "message": "Start" },
-  "labelEnd": { "message": "End" },
-  "labelLocation": { "message": "Location" },
-  "labelDescription": { "message": "Description" },
-  "labelCalendar": { "message": "Target Calendar" },
-  "registerBtn": { "message": "Register to Calendar" },
-  "registeringStatus": { "message": "Registering..." },
-  "registerSuccess": { "message": "Successfully registered!" },
-    "noCalendarWarning": { "message": "Please register a calendar in settings" },
-  "optionsPageTitle": { "message": "Mail2Cal Settings" },
-  "optionsMainHeader": { "message": "Mail2Cal AI Settings" },
-  "sectionCalDAV": { "message": "1. CalDAV Credentials (OwnCloud/Nextcloud)" },
-  "labelUsername": { "message": "Username" },
-  "labelPassword": { "message": "Password" },
-  "sectionCalendar": { "message": "2. Calendar List (JSON format)" },
-  "placeholderCalendarList": { "message": "[{\"id\":\"URL\", \"name\":\"Name\"}]" },
-  "exampleCalendarList": { "message": "Ex: [{\"id\": \"http://...\", \"name\": \"Personal\"}]" },
-  "sectionOllama": { "message": "3. Ollama Information" },
-  "labelOllamaUrl": { "message": "API URL" },
-  "labelOllamaModel": { "message": "Model Name" },
-  "labelPrompt": { "message": "AI Prompt Setting" },
-  "promptNote": { "message": "* Variables like {{subject}} are replaced by the code." },
-  "saveButton": { "message": "Save Settings" }
+  "optionsPageTitle": {
+    "message": "Mail2Cal Settings"
+  },
+  "optionsMainHeader": {
+    "message": "Mail2Cal AI Settings"
+  },
+  "popupPageTitle": {
+    "message": "Confirm Event"
+  },
+  "popupHeader": {
+    "message": "📅 Confirm Event"
+  },
+  "sectionCalDAV": {
+    "message": "1. CalDAV Credentials (OwnCloud/Nextcloud)"
+  },
+  "labelUsername": {
+    "message": "Username"
+  },
+  "labelPassword": {
+    "message": "Password"
+  },
+  "sectionCalendar": {
+    "message": "2. Calendar List (JSON format)"
+  },
+  "labelCalendar": {
+    "message": "Target Calendar"
+  },
+  "placeholderCalendarList": {
+    "message": "[{\"id\":\"URL\", \"name\":\"Name\"}]"
+  },
+  "exampleCalendarList": {
+    "message": "Ex: [{\"id\": \"http://...\", \"name\": \"Personal\"}]"
+  },
+  "sectionOllama": {
+    "message": "3. Ollama Information"
+  },
+  "labelOllamaUrl": {
+    "message": "API URL"
+  },
+  "labelOllamaModel": {
+    "message": "Model Name"
+  },
+  "labelPrompt": {
+    "message": "AI Prompt Setting"
+  },
+  "promptNote": {
+    "message": "* Variables like {{subject}} are replaced by the code."
+  },
+  "labelTitle": {
+    "message": "Title"
+  },
+  "labelStart": {
+    "message": "Start"
+  },
+  "labelEnd": {
+    "message": "End"
+  },
+  "labelLocation": {
+    "message": "Location"
+  },
+  "labelDescription": {
+    "message": "Description"
+  },
+  "saveButton": {
+    "message": "Save Settings"
+  },
+  "resetPromptButton": {
+    "message": "Reset Prompt to Default"
+  },
+  "registerButton": {
+    "message": "Register to Calendar"
+  },
+  "saveSuccess": {
+    "message": "Settings saved successfully."
+  },
+  "saveError": {
+    "message": "Failed to save. Please check the JSON format of the calendar list."
+  },
+  "errorLoadSettings": {
+    "message": "Failed to load initial settings. Please try reloading the add-on."
+  },
+  "noCalendarWarning": {
+    "message": "Please register a calendar in settings"
+  },
+  "registeringStatus": {
+    "message": "Registering..."
+  },
+  "registerSuccess": {
+    "message": "Successfully registered!"
+  },
+  "registerFail": {
+    "message": "Registration failed"
+  },
+  "communicationError": {
+    "message": "A communication error occurred"
+  },
+  "confirmResetPrompt": {
+    "message": "This will reset the prompt to the default for your current language. Are you sure?"
+  },
+  "defaultAiPrompt": {
+    "message": "You are an engine that extracts event information from emails.\n\nConstraints:\n- Output MUST be JSON only.\n- No Markdown, No explanations.\n- Use 24-hour format for time.\n\nOutput format (JSON only):\n{\n  \"title\": \"Event Title\",\n  \"start\": \"YYYY-MM-DDTHH:MM\",\n  \"end\": \"YYYY-MM-DDTHH:MM\",\n  \"location\": \"Location\",\n  \"description\": \"Description\",\n  \"confidence\": \"high|medium|low\"\n}\n\nEmail Date: {{date}}\n\nSubject:\n{{subject}}\n\nBody:\n{{body}}\n\nFrom:\n{{from}}\n\nExample:\nEmail Date: Dec 30, 2025\nBody: \"Jan 13th, 12:45 - 14:15\"\n→ start=\"2026-01-13T12:45\" end=\"2026-01-13T14:15\""
+  }
 }

@@ -1,51 +1,12 @@
 // background.js の一番上に配置
 console.log("Mail2Cal: Background Script Loading...");
 
-// 言語に応じたプロンプトを取得する関数
-function getDefaultPrompt() {
-  const lang = browser.i18n.getUILanguage(); // "ja", "en-US", etc.
-  
-  if (lang.startsWith("ja")) {
-    return `あなたは日本語のビジネスメールから予定情報を抽出するエンジンです。
-制約:
-- 出力は JSON のみ
-- Markdown禁止、説明文禁止
-- 時刻は24時間表記で JSTとして扱う
-
-出力形式（JSONのみ）:
-{
-  "title": "予定タイトル",
-  "start": "YYYY-MM-DDTHH:MM",
-  "end": "YYYY-MM-DDTHH:MM",
-  "location": "場所",
-  "description": "説明",
-  "confidence": "high|medium|low"
-}
-
-メール受信日時: {{date}}
-件名: {{subject}}
-本文: {{body}}`;
-  } else {
-    // 英語版プロンプト
-    return `You are an engine that extracts event information from emails.
-Constraints:
-- Output MUST be JSON only.
-- No Markdown, No explanations.
-- Use 24-hour format for time.
-
-Output format (JSON only):
-{
-  "title": "Event Title",
-  "start": "YYYY-MM-DDTHH:MM",
-  "end": "YYYY-MM-DDTHH:MM",
-  "location": "Location",
-  "description": "Description",
-  "confidence": "high|medium|low"
-}
-
-Email Date: {{date}}
-Subject: {{subject}}
-Body: {{body}}`;
+async function initSettings() {
+  const settings = await browser.storage.local.get(["ollamaPrompt"]);
+  if (!settings.ollamaPrompt) {
+    // 辞書から言語に合わせたデフォルトプロンプトを取得
+    const defaultPrompt = browser.i18n.getMessage("defaultAiPrompt");
+    await browser.storage.local.set({ ollamaPrompt: defaultPrompt });
   }
 }
 
