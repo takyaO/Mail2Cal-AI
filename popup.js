@@ -1,5 +1,13 @@
 (async () => {
-  // --- 1. 要素の取得 (IDがHTMLに存在するか厳密にチェック) ---
+  // --- 多言語化適用関数 ---
+  function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const msg = browser.i18n.getMessage(el.getAttribute('data-i18n'));
+      if (msg) el.textContent = msg;
+    });
+  }
+
+  // --- 1. 要素の取得 ---
   const getEl = (id) => document.getElementById(id);
   
   const el = {
@@ -12,11 +20,13 @@
     registerBtn: getEl("registerBtn")
   };
 
-  // 取得漏れチェック（デバッグ用）
+  // 翻訳の適用
+  applyI18n();
+
   for (const [key, value] of Object.entries(el)) {
     if (!value) {
       console.error(`要素が見つかりません: id="${key}"`);
-      return; // 1つでも欠けていたら実行を止める
+      return;
     }
   }
 
@@ -49,7 +59,8 @@
       });
     } else {
       const opt = document.createElement("option");
-      opt.textContent = "設定画面でカレンダーを登録してください";
+      // 辞書から「カレンダーを登録してください」を取得
+      opt.textContent = browser.i18n.getMessage("noCalendarWarning");
       el.calendarSelect.appendChild(opt);
       el.registerBtn.disabled = true;
     }
@@ -57,10 +68,11 @@
     console.error("カレンダー取得失敗", e);
   }
 
-  // --- 4. 登録ボタンのイベント (旧コードの saveAuth などは含めない) ---
+  // --- 4. 登録ボタンのイベント ---
   el.registerBtn.addEventListener("click", async () => {
     el.registerBtn.disabled = true;
-    el.registerBtn.textContent = "登録中...";
+    // 「登録中...」を多言語化
+    el.registerBtn.textContent = browser.i18n.getMessage("registeringStatus");
 
     const updatedEvent = {
       title: el.title.value,
@@ -78,16 +90,17 @@
       });
 
       if (res && res.ok) {
-        alert("登録に成功しました！");
+        alert(browser.i18n.getMessage("registerSuccess"));
         window.close();
       } else {
-        alert("登録失敗: " + (res?.error || "不明なエラー"));
+        alert(browser.i18n.getMessage("registerFail") + ": " + (res?.error || "Unknown Error"));
       }
     } catch (e) {
-      alert("通信エラーが発生しました");
+      alert(browser.i18n.getMessage("communicationError"));
     } finally {
       el.registerBtn.disabled = false;
-      el.registerBtn.textContent = "カレンダーに登録";
+      // 元のボタンテキストに戻す
+      el.registerBtn.textContent = browser.i18n.getMessage("registerBtn");
     }
   });
 })();

@@ -1,11 +1,12 @@
 // background.js の一番上に配置
 console.log("Mail2Cal: Background Script Loading...");
 
-const DEFAULT_SETTINGS = {
-    ollamaUrl: "http://100.127.x.y:11434",
-    ollamaModel: "qwen2.5:7b",
-    ollamaPrompt: `あなたは日本語のビジネスメールから予定情報を抽出するエンジンです。
-
+// 言語に応じたプロンプトを取得する関数
+function getDefaultPrompt() {
+  const lang = browser.i18n.getUILanguage(); // "ja", "en-US", etc.
+  
+  if (lang.startsWith("ja")) {
+    return `あなたは日本語のビジネスメールから予定情報を抽出するエンジンです。
 制約:
 - 出力は JSON のみ
 - Markdown禁止、説明文禁止
@@ -22,31 +23,40 @@ const DEFAULT_SETTINGS = {
 }
 
 メール受信日時: {{date}}
+件名: {{subject}}
+本文: {{body}}`;
+  } else {
+    // 英語版プロンプト
+    return `You are an engine that extracts event information from emails.
+Constraints:
+- Output MUST be JSON only.
+- No Markdown, No explanations.
+- Use 24-hour format for time.
 
-件名:
-{{subject}}
+Output format (JSON only):
+{
+  "title": "Event Title",
+  "start": "YYYY-MM-DDTHH:MM",
+  "end": "YYYY-MM-DDTHH:MM",
+  "location": "Location",
+  "description": "Description",
+  "confidence": "high|medium|low"
+}
 
-本文:
-{{body}}
+Email Date: {{date}}
+Subject: {{subject}}
+Body: {{body}}`;
+  }
+}
 
-差出人:
-{{from}}
-
-例:
-メール受信日: 2025年12月30日
-本文: "日時：1月13日 12:45 ～ 14:15"
-→ start="2026-01-13T12:45" end="2026-01-13T14:15"
-`, 
+// 動的にデフォルト設定を作成
+const DEFAULT_SETTINGS = {
+    ollamaUrl: "http://100.127.x.y:11434",
+    ollamaModel: "qwen2.5:7b",
+    ollamaPrompt: getDefaultPrompt(), // ここで言語判定を呼び出す
     calendarList: [
-    { 
-      "id": "http://100.119.x.y/owncloud/remote.php/dav/calendars/okabe/personal/", 
-      "name": "個人用" 
-    },
-    { 
-      "id": "http://100.119.x.y/owncloud/remote.php/dav/calendars/okabe/--2/", 
-      "name": "仕事用" 
-    }
-  ]
+        { "id": "http://example.com/dav/personal/", "name": "Default Calendar" }
+    ]
 };
 
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -71,9 +81,33 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
-browser.menus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== "mail2cal") return;
 
+console.log("Mail2Cal: Background Script Ready.");
+
+
+// 認証ヘッダー作成関数
+async function getAuthHeader() {
+  const data = await browser.storage.local.get(["username", "password"]);
+  if (!data.username || !data.password) {
+    throw new Error("認証情報が設定されていません");
+  }
+  const credentials = `${data.username}:${data.password}`;
+  // Unicode対応のBase64エンコード
+  const encoded = btoa(unescape(encodeURIComponent(credentials)));
+  return `Basic ${encoded}`;
+}
+
+
+// --- 2. メニュー作成 ---
+browser.menus.create({
+  id: "mail-to-cal-ai", // ここにIDを合わせる
+  title: browser.i18n.getMessage("contextMenuTitle"),
+  contexts: ["all"] // "page"より"all"の方がメール本文上で確実に動作します
+});
+
+// メニュークリック時の判定
+browser.menus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== "mail-to-cal-ai") return; // IDを一致させる
   console.log("Menu clicked");
 
   try {
@@ -106,32 +140,7 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 });
 
 
-console.log("Mail2Cal: Background Script Ready.");
 
-
-// 認証ヘッダー作成関数
-async function getAuthHeader() {
-  const data = await browser.storage.local.get(["username", "password"]);
-  if (!data.username || !data.password) {
-    throw new Error("認証情報が設定されていません");
-  }
-  const credentials = `${data.username}:${data.password}`;
-  // Unicode対応のBase64エンコード
-  const encoded = btoa(unescape(encodeURIComponent(credentials)));
-  return `Basic ${encoded}`;
-}
-
-
-// --- 2. メニュー作成とクリックイベント ---
-browser.menus.create({
-  id: "mail2cal",
-  title: "Mail to Calendar AIで解析",
-  // エラーリストにある有効な値のみを使用します
-  contexts: ["page"]
-});
-
-
-// --- 補助関数 (extractBody, sendToOllama, normalizeEvent 等は以前のものをここに貼り付け) ---
 
 // ===== 本文抽出（text/plain 優先） =====
 function extractBody(full) {

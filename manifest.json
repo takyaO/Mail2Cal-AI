@@ -1,13 +1,15 @@
 {
-  "manifest_version": 2,
-  "name": "Mail to Calendar AI",
-  "version": "1.0.0",
-  "applications": {
-    "gecko": {
-      "id": "mail2cal-ai@yourdomain.local",
-      "strict_min_version": "115.0"
-    }
-  },
+    "manifest_version": 2,
+    "default_locale": "en",  
+    "name": "__MSG_extensionName__",
+    "description": "__MSG_extensionDescription__",
+    "version": "1.0.0",
+    "applications": {
+	"gecko": {
+	    "id": "mail2cal-ai@yourdomain.local",
+	    "strict_min_version": "115.0"
+	}
+    },
   "permissions": [
     "messagesRead",
     "menus",

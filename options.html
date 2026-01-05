@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Mail2Cal 設定</title>
+  <title data-i18n="optionsPageTitle">Mail2Cal Settings</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 600px; }
     section { margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
@@ -14,34 +14,34 @@
   </style>
 </head>
 <body>
-  <h1>Mail2Cal AI 設定</h1>
+  <h1 data-i18n="optionsMainHeader">Mail2Cal AI 設定</h1>
 
   <section>
-    <h2>1. CalDAV 認証情報 (OwnCloud)</h2>
-    <label>ユーザー名</label>
+    <h2 data-i18n="sectionCalDAV">1. CalDAV 認証情報 (OwnCloud)</h2>
+    <label data-i18n="labelUsername">ユーザー名</label>
     <input type="text" id="username">
-    <label>パスワード</label>
+    <label data-i18n="labelPassword">パスワード</label>
     <input type="password" id="password">
   </section>
 
   <section>
-    <h2>2. カレンダー一覧 (JSON形式)</h2>
-    <textarea id="calendarList" placeholder='[{"id":"URL", "name":"名前"}]'></textarea>
-    <small>例: [{"id": "http://...", "name": "個人用"}]</small>
+    <h2 data-i18n="sectionCalendar">2. カレンダー一覧 (JSON形式)</h2>
+    <textarea id="calendarList" data-i18n-placeholder="placeholderCalendarList"></textarea>
+    <small data-i18n="exampleCalendarList">例: [{"id": "http://...", "name": "個人用"}]</small>
   </section>
 
   <section>
-    <h2>3. Ollama 情報</h2>
-    <label>API URL</label>
-    <input type="text" id="ollamaUrl" placeholder="http://100.127.80.123:11434">
-    <label>モデル名</label>
+    <h2 data-i18n="sectionOllama">3. Ollama 情報</h2>
+    <label data-i18n="labelOllamaUrl">API URL</label>
+    <input type="text" id="ollamaUrl" placeholder="http://127.0.0.1:11434">
+    <label data-i18n="labelOllamaModel">モデル名</label>
     <input type="text" id="ollamaModel" placeholder="qwen2.5:7b">
-    <label>AI プロンプト設定</label>
+    <label data-i18n="labelPrompt">AI プロンプト設定</label>
     <textarea id="ollamaPrompt" style="height: 200px;"></textarea>
-    <small>※ {{subject}} などの変数はコード側で置換します</small>
+    <small data-i18n="promptNote">※ {{subject}} などの変数はコード側で置換します</small>
   </section>
 
-  <button id="save">設定を保存</button>
+  <button id="save" data-i18n="saveButton">設定を保存</button>
 
   <script src="options.js"></script>
 </body>

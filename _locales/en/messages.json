@@ -1,0 +1,55 @@
+{
+  "extensionName": {
+    "message": "Mail2Cal-AI"
+  },
+    "extensionDescription": {
+	"message": "Extracts events from emails using local AI (Ollama) and registers them to CalDAV."
+    } ,
+    "contextMenuTitle": {
+	"message": "Mail to Calendar AI"
+    },
+    "registerButton": {
+	"message": "Register to Calendar"
+    },
+  "saveSuccess": { "message": "Settings saved successfully." },
+  "saveError": { "message": "Failed to save. Please check the JSON format of the calendar list." },
+    "errorLoadSettings": { "message": "Failed to load initial settings. Please try reloading the add-on." },
+  "contextMenuTitle": {
+    "message": "Mail to Calendar AI"
+  },
+  "noCalendarWarning": { "message": "Please register a calendar in settings" },
+  "registeringStatus": { "message": "Registering..." },
+  "registerSuccess": { "message": "Successfully registered!" },
+  "registerFail": { "message": "Registration failed" },
+    "communicationError": { "message": "A communication error occurred" },
+  "extensionName": { "message": "Mail2Cal-AI" },
+  "extensionDescription": { "message": "Extracts events from emails using local AI." },
+  "contextMenuTitle": { "message": "Mail to Calendar AI" },
+  "optionsPageTitle": { "message": "Mail2Cal Settings" },
+  "popupPageTitle": { "message": "Confirm Event" },
+  "popupHeader": { "message": "📅 Confirm Event" },
+  "labelTitle": { "message": "Title" },
+  "labelStart": { "message": "Start" },
+  "labelEnd": { "message": "End" },
+  "labelLocation": { "message": "Location" },
+  "labelDescription": { "message": "Description" },
+  "labelCalendar": { "message": "Target Calendar" },
+  "registerBtn": { "message": "Register to Calendar" },
+  "registeringStatus": { "message": "Registering..." },
+  "registerSuccess": { "message": "Successfully registered!" },
+    "noCalendarWarning": { "message": "Please register a calendar in settings" },
+  "optionsPageTitle": { "message": "Mail2Cal Settings" },
+  "optionsMainHeader": { "message": "Mail2Cal AI Settings" },
+  "sectionCalDAV": { "message": "1. CalDAV Credentials (OwnCloud/Nextcloud)" },
+  "labelUsername": { "message": "Username" },
+  "labelPassword": { "message": "Password" },
+  "sectionCalendar": { "message": "2. Calendar List (JSON format)" },
+  "placeholderCalendarList": { "message": "[{\"id\":\"URL\", \"name\":\"Name\"}]" },
+  "exampleCalendarList": { "message": "Ex: [{\"id\": \"http://...\", \"name\": \"Personal\"}]" },
+  "sectionOllama": { "message": "3. Ollama Information" },
+  "labelOllamaUrl": { "message": "API URL" },
+  "labelOllamaModel": { "message": "Model Name" },
+  "labelPrompt": { "message": "AI Prompt Setting" },
+  "promptNote": { "message": "* Variables like {{subject}} are replaced by the code." },
+  "saveButton": { "message": "Save Settings" }
+}

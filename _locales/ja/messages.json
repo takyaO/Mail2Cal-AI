@@ -1,0 +1,53 @@
+{
+    "extensionName": {
+	"message": "メールからカレンダー登録 AI"
+    },
+    "extensionDescription": {
+	"message": "ローカルAI(Ollama)を使用してメールから予定を抽出し、CalDAVに登録します。"
+    },
+    "contextMenuTitle": {
+	"message": "Mail to Calendar AI (解析)"
+    },
+    "registerButton": {
+	"message": "カレンダーに登録"
+    },
+  "saveSuccess": { "message": "設定を保存しました。" },
+  "saveError": { "message": "保存に失敗しました。カレンダー一覧のJSON形式を確認してください。" },
+    "errorLoadSettings": { "message": "初期設定の読み込みに失敗しました。アドオンマネージャーから再読み込みを試してください。" },
+  "contextMenuTitle": {
+    "message": "Mail to Calendar AI (解析)"
+  },
+  "noCalendarWarning": { "message": "設定画面でカレンダーを登録してください" },
+  "registeringStatus": { "message": "登録中..." },
+  "registerSuccess": { "message": "登録に成功しました！" },
+  "registerFail": { "message": "登録失敗" },
+    "communicationError": { "message": "通信エラーが発生しました" },
+"popupPageTitle": { "message": "予定の確認と登録" },
+  "popupHeader": { "message": "📅 予定の確認" },
+  "labelTitle": { "message": "タイトル" },
+  "labelStart": { "message": "開始日時" },
+  "labelEnd": { "message": "終了日時" },
+  "labelLocation": { "message": "場所" },
+  "labelDescription": { "message": "説明" },
+  "labelCalendar": { "message": "登録先カレンダー" },
+  "registerBtn": { "message": "カレンダーに登録" },
+  "registeringStatus": { "message": "登録中..." },
+  "registerSuccess": { "message": "登録に成功しました！" },
+  "registerFail": { "message": "登録に失敗しました" },
+  "communicationError": { "message": "通信エラーが発生しました" },
+    "noCalendarWarning": { "message": "設定画面でカレンダーを登録してください" } ,
+"optionsPageTitle": { "message": "Mail2Cal 設定" },
+  "optionsMainHeader": { "message": "Mail2Cal AI 設定" },
+  "sectionCalDAV": { "message": "1. CalDAV 認証情報 (OwnCloud/Nextcloud)" },
+  "labelUsername": { "message": "ユーザー名" },
+  "labelPassword": { "message": "パスワード" },
+  "sectionCalendar": { "message": "2. カレンダー一覧 (JSON形式)" },
+  "placeholderCalendarList": { "message": "[{\"id\":\"URL\", \"name\":\"名前\"}]" },
+  "exampleCalendarList": { "message": "例: [{\"id\": \"http://...\", \"name\": \"個人用\"}]" },
+  "sectionOllama": { "message": "3. Ollama 情報" },
+  "labelOllamaUrl": { "message": "API URL" },
+  "labelOllamaModel": { "message": "モデル名" },
+  "labelPrompt": { "message": "AI プロンプト設定" },
+  "promptNote": { "message": "※ {{subject}} などの変数はコード側で置換します。" },
+  "saveButton": { "message": "設定を保存" }    
+}

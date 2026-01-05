@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>予定の確認と登録</title>
+  <title data-i18n="popupPageTitle">Confirm Event</title>
   <style>
     body { width: 400px; padding: 15px; font-family: sans-serif; font-size: 14px; }
     .field { margin-bottom: 10px; }
@@ -16,39 +16,39 @@
   </style>
 </head>
 <body>
-  <h3>📅 予定の確認</h3>
+  <h3 data-i18n="popupHeader">📅 予定の確認</h3>
   
   <div class="field">
-    <label>タイトル</label>
+    <label data-i18n="labelTitle">タイトル</label>
     <input type="text" id="title">
   </div>
 
   <div class="field">
-    <label>開始日時</label>
+    <label data-i18n="labelStart">開始日時</label>
     <input type="datetime-local" id="start">
   </div>
 
   <div class="field">
-    <label>終了日時</label>
+    <label data-i18n="labelEnd">終了日時</label>
     <input type="datetime-local" id="end">
   </div>
 
   <div class="field">
-    <label>場所</label>
+    <label data-i18n="labelLocation">場所</label>
     <input type="text" id="location">
   </div>
 
   <div class="field">
-    <label>説明</label>
+    <label data-i18n="labelDescription">説明</label>
     <textarea id="description" rows="6"></textarea>
   </div>
 
   <div class="field">
-    <label>登録先カレンダー</label>
+    <label data-i18n="labelCalendar">登録先カレンダー</label>
     <select id="calendarSelect"></select>
   </div>
 
-  <button id="registerBtn">カレンダーに登録</button>
+  <button id="registerBtn" data-i18n="registerBtn">カレンダーに登録</button>
 
   <script src="popup.js"></script>
 </body>
