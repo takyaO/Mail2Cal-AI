@@ -104,6 +104,9 @@
   "communicationError": {
     "message": "通信エラーが発生しました"
   },
+  "errorNoCredentials": {
+    "message": "設定画面でユーザー名とパスワードを入力してください。"
+  },
   "confirmResetPrompt": {
     "message": "プロンプトを現在の言語の初期値に戻します。よろしいですか？"
   },

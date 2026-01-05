@@ -104,6 +104,9 @@
   "communicationError": {
     "message": "A communication error occurred"
   },
+  "errorNoCredentials": {
+    "message": "Please enter your username and password in the settings."
+  },
   "confirmResetPrompt": {
     "message": "This will reset the prompt to the default for your current language. Are you sure?"
   },

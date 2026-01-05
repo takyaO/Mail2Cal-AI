@@ -1,35 +1,57 @@
 // background.js の一番上に配置
 console.log("Mail2Cal: Background Script Loading...");
 
+// プロンプト以外の、言語に依存しないデフォルト値
+const DEFAULT_SETTINGS = {
+  ollamaUrl: "http://100.127.x.y:11434",
+  ollamaModel: "qwen2.5:7b",
+  calendarList: [
+    { "id": "http://example.com/dav/personal/", "name": "Default Calendar" }
+  ]
+};
+
 async function initSettings() {
-  const settings = await browser.storage.local.get(["ollamaPrompt"]);
+  const settings = await browser.storage.local.get([
+    "ollamaUrl", 
+    "ollamaModel", 
+    "ollamaPrompt", 
+    "calendarList"
+  ]);
+
+  const newSettings = {};
+  let needsUpdate = false;
+
   if (!settings.ollamaPrompt) {
-    // 辞書から言語に合わせたデフォルトプロンプトを取得
-    const defaultPrompt = browser.i18n.getMessage("defaultAiPrompt");
-    await browser.storage.local.set({ ollamaPrompt: defaultPrompt });
+    newSettings.ollamaPrompt = browser.i18n.getMessage("defaultAiPrompt");
+    needsUpdate = true;
+  }
+
+  for (const key in DEFAULT_SETTINGS) {
+    if (!settings[key]) {
+      newSettings[key] = DEFAULT_SETTINGS[key];
+      needsUpdate = true;
+    }
+  }
+
+  if (needsUpdate) {
+    await browser.storage.local.set(newSettings);
+    console.log("Initial settings initialized:", newSettings);
   }
 }
 
-// 動的にデフォルト設定を作成
-const DEFAULT_SETTINGS = {
-    ollamaUrl: "http://100.127.x.y:11434",
-    ollamaModel: "qwen2.5:7b",
-    ollamaPrompt: getDefaultPrompt(), // ここで言語判定を呼び出す
-    calendarList: [
-        { "id": "http://example.com/dav/personal/", "name": "Default Calendar" }
-    ]
-};
+// 起動・インストール時の初期化
+initSettings(); 
+browser.runtime.onInstalled.addListener(initSettings);
+browser.runtime.onStartup.addListener(initSettings);
 
+// メッセージリスナー
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  console.log("Mail2Cal: Message received ->", msg.type);
-
   if (msg.type === "getDefaultSettings") {
     sendResponse(DEFAULT_SETTINGS);
     return false;
   }
   
   if (msg.type === "getCalendars") {
-    // 登録先が表示されない問題の修正: ストレージから返却
     browser.storage.local.get("calendarList").then(data => {
       sendResponse({ calendars: data.calendarList || [] });
     });
@@ -37,45 +59,25 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === "addEvent") {
-    handleAddEvent(msg, sendResponse); // CalDAVへの送信処理
+    handleAddEvent(msg, sendResponse);
     return true;
   }
 });
 
-
-console.log("Mail2Cal: Background Script Ready.");
-
-
-// 認証ヘッダー作成関数
-async function getAuthHeader() {
-  const data = await browser.storage.local.get(["username", "password"]);
-  if (!data.username || !data.password) {
-    throw new Error("認証情報が設定されていません");
-  }
-  const credentials = `${data.username}:${data.password}`;
-  // Unicode対応のBase64エンコード
-  const encoded = btoa(unescape(encodeURIComponent(credentials)));
-  return `Basic ${encoded}`;
-}
-
-
-// --- 2. メニュー作成 ---
+// コンテキストメニュー作成
 browser.menus.create({
-  id: "mail-to-cal-ai", // ここにIDを合わせる
+  id: "mail-to-cal-ai",
   title: browser.i18n.getMessage("contextMenuTitle"),
-  contexts: ["all"] // "page"より"all"の方がメール本文上で確実に動作します
+  contexts: ["all"]
 });
 
-// メニュークリック時の判定
 browser.menus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== "mail-to-cal-ai") return; // IDを一致させる
-  console.log("Menu clicked");
+  if (info.menuItemId !== "mail-to-cal-ai") return;
 
   try {
     const message = await browser.messageDisplay.getDisplayedMessage(tab.id);
     const full = await browser.messages.getFull(message.id);
     
-    // 既存の補助関数（extractBody, sendToOllama等）を呼び出し
     const mailData = {
       subject: message.subject,
       from: message.author,
@@ -83,12 +85,11 @@ browser.menus.onClicked.addListener(async (info, tab) => {
       body: (extractBody(full) || "").trim()
     };
 
-    console.log("Sending to LLM...");
+    console.log("Processing with LLM...");
     const raw = await sendToOllama(mailData);
     const llmJson = extractJSON(raw);
     const eventData = normalizeEvent(llmJson, mailData);
 
-    console.log("Opening popup window...");
     browser.windows.create({
       url: browser.runtime.getURL("popup.html") + `?event=${encodeURIComponent(JSON.stringify(eventData))}`,
       type: "popup",
@@ -100,56 +101,19 @@ browser.menus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-
-
-
-// ===== 本文抽出（text/plain 優先） =====
-function extractBody(full) {
-  if (!full || !full.parts) return "";
-
-  // text/plain 優先
-  const plain = findPart(full.parts, "text/plain");
-  if (plain && plain.body) {
-    return plain.body;
-  }
-
-  // fallback: html
-  const html = findPart(full.parts, "text/html");
-  if (html && html.body) {
-    return stripHtml(html.body);
-  }
-
-  return "";
-}
-
-function findPart(parts, mime) {
-  for (const part of parts) {
-    if (part.contentType && part.contentType.startsWith(mime)) {
-      return part;
-    }
-    if (part.parts) {
-      const found = findPart(part.parts, mime);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-function stripHtml(html) {
-  return html
-    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-    .replace(/<[^>]+>/g, "")
-    .trim();
-}
-
-
+// --- Ollama送信 ---
 async function sendToOllama(mailData) {
-// getの第1引数に DEFAULT_SETTINGS を渡せば、未設定項目のみデフォルトが適用される
-  const config = await browser.storage.local.get(DEFAULT_SETTINGS);    
-    let prompt = config.ollamaPrompt
-	.replace("{{subject}}", mailData.subject)
-	.replace("{{body}}", mailData.body);
+  const config = await browser.storage.local.get({
+    ...DEFAULT_SETTINGS,
+    ollamaPrompt: browser.i18n.getMessage("defaultAiPrompt")
+  });
+
+  const dateStr = mailData.date.toLocaleString("ja-JP");
+  let prompt = config.ollamaPrompt
+    .replace("{{subject}}", mailData.subject)
+    .replace("{{body}}", mailData.body)
+    .replace("{{date}}", dateStr)
+    .replace("{{from}}", mailData.from);
     
   const res = await fetch(`${config.ollamaUrl}/api/generate`, {
     method: "POST",
@@ -166,128 +130,37 @@ async function sendToOllama(mailData) {
   return json.response;
 }
 
-function cleanLLMOutput(text) {
-  return text
-    .replace(/```json\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-}
-
-function fixYear(date, mailDate) {
-  if (date.getFullYear() !== mailDate.getFullYear()) {
-    date.setFullYear(mailDate.getFullYear() + 1);
-  }
-  return date;
-}
-
-function buildDescription(mailData) {
-  return `
-${mailData.body}
-
----
-[Mail-ID]
-From: ${mailData.from}
-Sent: ${mailData.date.toLocaleString("ja-JP")} JST
-Subject: ${mailData.subject}
-`.trim();
-}
-
-function toLocalISO(date) {
-  const pad = n => String(n).padStart(2, "0");
-  return (
-    date.getFullYear() + "-" +
-    pad(date.getMonth() + 1) + "-" +
-    pad(date.getDate()) + "T" +
-    pad(date.getHours()) + ":" +
-    pad(date.getMinutes())
-  );
-}
-
-function extractJSON(text) {
-  // ```json ... ``` を除去
-  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenceMatch) {
-    text = fenceMatch[1];
-  }
-
-  // 前後のゴミ除去
-  text = text.trim();
-
-  // 最初と最後の { } だけ抜き出す（保険）
-  const braceMatch = text.match(/\{[\s\S]*\}/);
-  if (braceMatch) {
-    text = braceMatch[0];
-  }
-
-  return JSON.parse(text);
-}
-
-
-
-function normalizeEvent(llmJson, mailData) {
-  const schedule = llmJson.日程 || llmJson.schedule || llmJson || {};
-
-  // ✅ 修正：変数の再定義エラーを回避
-  let startRaw = schedule.start || schedule.開始 || llmJson.start || null;
-  
-  if (!startRaw) {
-    startRaw = mailData.date.toISOString();
-  }
-
-  const endRaw = schedule.end || schedule.終了 || llmJson.end || null;
-
-  const startDate = fixYear(new Date(startRaw), mailData.date);
-  const endDate = endRaw
-    ? fixYear(new Date(endRaw), mailData.date)
-    : new Date(startDate.getTime() + 60 * 60 * 1000);
-
-  return {
-    title: llmJson.title || llmJson.内容 || mailData.subject || "予定",
-    start: toLocalISO(startDate),
-    end: toLocalISO(endDate),
-    location: llmJson.location || llmJson.場所 || "",
-    description: buildDescription(mailData),
-    confidence: llmJson.confidence || "high"
-  };
-}
-
-// --- 予定を CalDAV サーバーに登録する関数 ---
+// --- CalDAV登録 ---
 async function handleAddEvent(msg, sendResponse) {
   try {
     const { calendarId, eventData } = msg;
-    
-    // ストレージから認証情報を取得
     const auth = await browser.storage.local.get(["username", "password"]);
-    if (!auth.username || !auth.password) {
-      throw new Error("設定画面でユーザー名とパスワードを入力してください。");
-    }
 
-    // Basic認証ヘッダーの作成
-    const authHeader = "Basic " + btoa(unescape(encodeURIComponent(`${auth.username}:${auth.password}`)));
+    if (!auth.username || !auth.password) {
+      throw new Error(browser.i18n.getMessage("errorNoCredentials"));
+    }
     
-    // ICSデータの生成
+    const systemTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const authHeader = "Basic " + btoa(unescape(encodeURIComponent(`${auth.username}:${auth.password}`)));
     const uid = crypto.randomUUID();
-    const f = (s) => s.replace(/[-:]/g, "") + "00"; // YYYYMMDDTHHmm00 形式へ
+    const f = (s) => s.replace(/[-:]/g, "") + "00";
 
     const icsData = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Mail2Cal//NONSGML v1.0//EN",
+      "PRODID:-//Mail2Cal//NONSGML v1.1//EN",
       "BEGIN:VEVENT",
       `UID:${uid}`,
       `SUMMARY:${eventData.title}`,
-      `DTSTART;TZID=Asia/Tokyo:${f(eventData.start)}`,
-      `DTEND;TZID=Asia/Tokyo:${f(eventData.end)}`,
+      `DTSTART;TZID=${systemTimeZone}:${f(eventData.start)}`,
+      `DTEND;TZID=${systemTimeZone}:${f(eventData.end)}`,
       `LOCATION:${eventData.location || ""}`,
       `DESCRIPTION:${(eventData.description || "").replace(/\n/g, "\\n")}`,
       "END:VEVENT",
       "END:VCALENDAR"
     ].join("\r\n");
 
-    // PUTリクエストの送信
     const url = `${calendarId}${uid}.ics`;
-    console.log("Sending PUT request to:", url);
-
     const response = await fetch(url, {
       method: "PUT",
       headers: {
@@ -304,7 +177,77 @@ async function handleAddEvent(msg, sendResponse) {
       sendResponse({ ok: false, error: `HTTP ${response.status}: ${errorText}` });
     }
   } catch (e) {
-    console.error("handleAddEvent Error:", e);
     sendResponse({ ok: false, error: e.message });
   }
 }
+
+// --- 補助関数 (抽出・正規化) ---
+function extractBody(full) {
+  if (!full || !full.parts) return "";
+  const plain = findPart(full.parts, "text/plain");
+  if (plain && plain.body) return plain.body;
+  const html = findPart(full.parts, "text/html");
+  if (html && html.body) return stripHtml(html.body);
+  return "";
+}
+
+function findPart(parts, mime) {
+  for (const part of parts) {
+    if (part.contentType && part.contentType.startsWith(mime)) return part;
+    if (part.parts) {
+      const found = findPart(part.parts, mime);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function stripHtml(html) {
+  return html.replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "").replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "").replace(/<[^>]+>/g, "").trim();
+}
+
+function extractJSON(text) {
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch) text = fenceMatch[1];
+  text = text.trim();
+  const braceMatch = text.match(/\{[\s\S]*\}/);
+  if (braceMatch) text = braceMatch[0];
+  return JSON.parse(text);
+}
+
+function normalizeEvent(llmJson, mailData) {
+  const schedule = llmJson.日程 || llmJson.schedule || llmJson || {};
+  let startRaw = schedule.start || schedule.開始 || llmJson.start || null;
+  if (!startRaw) startRaw = mailData.date.toISOString();
+  
+  const endRaw = schedule.end || schedule.終了 || llmJson.end || null;
+  const startDate = fixYear(new Date(startRaw), mailData.date);
+  const endDate = endRaw ? fixYear(new Date(endRaw), mailData.date) : new Date(startDate.getTime() + 60 * 60 * 1000);
+
+  return {
+    title: llmJson.title || llmJson.内容 || mailData.subject || "予定",
+    start: toLocalISO(startDate),
+    end: toLocalISO(endDate),
+    location: llmJson.location || llmJson.場所 || "",
+    description: buildDescription(mailData),
+    confidence: llmJson.confidence || "high"
+  };
+}
+
+function fixYear(date, mailDate) {
+  if (date.getFullYear() !== mailDate.getFullYear()) {
+    date.setFullYear(mailDate.getFullYear() + 1);
+  }
+  return date;
+}
+
+function buildDescription(mailData) {
+  return `${mailData.body}\n\n---\n[Mail-ID]\nFrom: ${mailData.from}\nSent: ${mailData.date.toLocaleString("ja-JP")} JST\nSubject: ${mailData.subject}`.trim();
+}
+
+function toLocalISO(date) {
+  const pad = n => String(n).padStart(2, "0");
+  return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + "T" + pad(date.getHours()) + ":" + pad(date.getMinutes());
+}
+
+console.log("Mail2Cal: Background Script Ready.");
