@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "name": "Mail to Calendar AI",
+  "version": "1.0.0",
+  "applications": {
+    "gecko": {
+      "id": "mail2cal-ai@yourdomain.local",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "messagesRead",
+    "menus",
+    "storage",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}

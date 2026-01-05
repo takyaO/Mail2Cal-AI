@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mail2Cal 設定</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; }
+    section { margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
+    h2 { margin-top: 0; font-size: 1.2em; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+    textarea { height: 80px; font-family: monospace; }
+    button { margin-top: 15px; padding: 10px 20px; background: #0078d7; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Mail2Cal AI 設定</h1>
+
+  <section>
+    <h2>1. CalDAV 認証情報 (OwnCloud)</h2>
+    <label>ユーザー名</label>
+    <input type="text" id="username">
+    <label>パスワード</label>
+    <input type="password" id="password">
+  </section>
+
+  <section>
+    <h2>2. カレンダー一覧 (JSON形式)</h2>
+    <textarea id="calendarList" placeholder='[{"id":"URL", "name":"名前"}]'></textarea>
+    <small>例: [{"id": "http://...", "name": "個人用"}]</small>
+  </section>
+
+  <section>
+    <h2>3. Ollama 情報</h2>
+    <label>API URL</label>
+    <input type="text" id="ollamaUrl" placeholder="http://100.127.80.123:11434">
+    <label>モデル名</label>
+    <input type="text" id="ollamaModel" placeholder="qwen2.5:7b">
+    <label>AI プロンプト設定</label>
+    <textarea id="ollamaPrompt" style="height: 200px;"></textarea>
+    <small>※ {{subject}} などの変数はコード側で置換します</small>
+  </section>
+
+  <button id="save">設定を保存</button>
+
+  <script src="options.js"></script>
+</body>
+</html>
