@@ -34,6 +34,14 @@
     <input type="text" id="title">
   </div>
 
+  <div class="field">
+    <label data-i18n="labelType">登録種別</label>
+    <select id="eventType">
+      <option value="event" data-i18n="optEvent">予定 (VEVENT)</option>
+      <option value="todo" data-i18n="optTodo">タスク (VTODO)</option>
+    </select>
+  </div>
+  
   <div class="all-day-container">
     <input type="checkbox" id="isAllDay">
     <label for="isAllDay"><span data-i18n="labelAllDay">終日の予定</span></label>

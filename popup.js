@@ -12,27 +12,19 @@
   
   const el = {
     title: getEl("title"),
-    isAllDay: getEl("isAllDay"),      // 追加
-    startDate: getEl("startDate"),    // start から分離
-    startTime: getEl("startTime"),    // start から分離
-    endDate: getEl("endDate"),        // end から分離
-    endTime: getEl("endTime"),        // end から分離
+    eventType: getEl("eventType"),    // ★追加: 予定/タスク切り替え用
+    isAllDay: getEl("isAllDay"),
+    startDate: getEl("startDate"),
+    startTime: getEl("startTime"),
+    endDate: getEl("endDate"),
+    endTime: getEl("endTime"),
     location: getEl("location"),
     description: getEl("description"),
     calendarSelect: getEl("calendarSelect"),
     registerBtn: getEl("registerBtn")
   };
 
-  // 翻訳の適用
   applyI18n();
-
-  // 要素チェック
-  for (const [key, value] of Object.entries(el)) {
-    if (!value) {
-      console.error(`要素が見つかりません: id="${key}"`);
-      return;
-    }
-  }
 
   // --- 2. 終日チェックボックスの連動ロジック ---
   el.isAllDay.addEventListener("change", () => {
@@ -41,7 +33,7 @@
     el.endTime.disabled = checked;
 
     if (checked) {
-      el.endDate.value = el.startDate.value; // 終了日を開始日に合わせる
+      el.endDate.value = el.startDate.value;
       el.startTime.style.opacity = "0.5";
       el.endTime.style.opacity = "0.5";
     } else {
@@ -50,7 +42,6 @@
     }
   });
 
-  // 開始日を変えたら、終日設定時のみ終了日も追従させる
   el.startDate.addEventListener("change", () => {
     if (el.isAllDay.checked) {
       el.endDate.value = el.startDate.value;
@@ -60,18 +51,27 @@
   // --- 3. URL引数からデータを解析して表示 ---
   const urlParams = new URLSearchParams(window.location.search);
   const eventParam = urlParams.get("event");
-  
-  if (eventParam) {
+
+if (eventParam) {
     try {
       const eventData = JSON.parse(decodeURIComponent(eventParam));
+      
+      // 基本は "event" をデフォルトとし、AIが明確に "todo" を指定した時のみ反映
+      if (el.eventType) {
+        el.eventType.value = (eventData.type === "todo") ? "todo" : "event";
+      }
+
       el.title.value = eventData.title || "";
       el.location.value = eventData.location || "";
-      el.description.value = eventData.description || "";
-      
-      // AIからの isAllDay 指定を反映（あれば）
+      el.description.value = eventData.description || "";    
+
+      // ★AIからの判定 (event or todo) を反映
+      if (el.eventType && eventData.type) {
+        el.eventType.value = eventData.type;
+      }
+
       el.isAllDay.checked = !!eventData.isAllDay;
 
-      // 日時を Date と Time に分割してセット
       if (eventData.start) {
         const [d, t] = eventData.start.split("T");
         el.startDate.value = d;
@@ -83,7 +83,6 @@
         el.endTime.value = t || "10:00";
       }
 
-      // 初期状態の表示制御をキック
       el.isAllDay.dispatchEvent(new Event('change'));
       
     } catch (e) {
@@ -91,7 +90,7 @@
     }
   }
 
-  // --- 4. カレンダー一覧取得 (略) ---
+  // --- 4. カレンダー一覧取得 --- (省略: 変更なし)
   try {
     const resp = await browser.runtime.sendMessage({ type: "getCalendars" });
     if (resp && resp.calendars && resp.calendars.length > 0) {
@@ -112,14 +111,15 @@
   // --- 5. 登録ボタンのイベント ---
   el.registerBtn.addEventListener("click", async () => {
     el.registerBtn.disabled = true;
+    const originalBtnText = el.registerBtn.textContent;
     el.registerBtn.textContent = browser.i18n.getMessage("registeringStatus");
 
     const isAllDay = el.isAllDay.checked;
     
     // background.js へ送るデータの構築
     const updatedEvent = {
+      type: el.eventType ? el.eventType.value : "event", // ★ type を追加
       title: el.title.value,
-      // 終日なら YYYY-MM-DD のみ、時間指定なら YYYY-MM-DDTHH:MM
       start: isAllDay ? el.startDate.value : `${el.startDate.value}T${el.startTime.value}`,
       end: isAllDay ? el.endDate.value : `${el.endDate.value}T${el.endTime.value}`,
       location: el.location.value,
@@ -144,7 +144,7 @@
       alert(browser.i18n.getMessage("communicationError"));
     } finally {
       el.registerBtn.disabled = false;
-      el.registerBtn.textContent = browser.i18n.getMessage("registerBtn");
+      el.registerBtn.textContent = originalBtnText;
     }
   });
 })();
