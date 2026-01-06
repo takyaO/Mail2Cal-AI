@@ -78,7 +78,7 @@
     "message": "プロンプトを初期値に戻す"
   },
   "registerButton": {
-    "message": "カレンダーに登録"
+    "message": "登録"
   },
   "saveSuccess": {
     "message": "設定を保存しました。"

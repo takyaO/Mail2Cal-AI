@@ -78,7 +78,7 @@
     "message": "Reset Prompt to Default"
   },
   "registerButton": {
-    "message": "Register to Calendar"
+    "message": "Register"
   },
   "saveSuccess": {
     "message": "Settings saved successfully."
