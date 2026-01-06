@@ -41,6 +41,15 @@
     <small data-i18n="promptNote">※ {{subject}} などの変数はコード側で置換します</small>
   </section>
 
+<div style="text-align: left; margin: 15px 0;">
+  <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 4px;">
+    <input type="checkbox" id="autoTodo" style="width: 16px; height: 16px; margin: 0 10px 0 0; flex-shrink: 0;">
+    <b data-i18n="labelAutoTodo" style="flex: 1;"></b>
+  </label>
+  
+  <div style="margin-left: 26px; font-size: 0.85em; color: #666;" data-i18n="helpAutoTodo"></div>
+</div>
+
   <button id="save" data-i18n="saveButton">設定を保存</button>
   <button id="resetPromptButton" data-i18n="resetPromptButton">プロンプトを初期値に戻す</button>
   <script src="options.js"></script>

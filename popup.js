@@ -52,25 +52,20 @@
   const urlParams = new URLSearchParams(window.location.search);
   const eventParam = urlParams.get("event");
 
-if (eventParam) {
+  if (eventParam) {
     try {
       const eventData = JSON.parse(decodeURIComponent(eventParam));
-      
-      // 基本は "event" をデフォルトとし、AIが明確に "todo" を指定した時のみ反映
-//      if (el.eventType) {
-//        el.eventType.value = (eventData.type === "todo") ? "todo" : "event";
-//      }
+
+      // 1. 設定を読み込む (autoTodoが未設定の場合はデフォルト false/OFF)
+      const res = await browser.storage.local.get("autoTodo");
+      const isAutoTodoEnabled = !!res.autoTodo;
 
       el.title.value = eventData.title || "";
       el.location.value = eventData.location || "";
       el.description.value = eventData.description || "";    
       el.isAllDay.checked = !!eventData.isAllDay;
 
-// 種別フィールドが存在する場合、一旦AIの値をセット（内部データ保持のため）
-      if (el.eventType) {
-        el.eventType.value = eventData.type || "event";
-      }
-
+      // 2. 日時セット処理
       if (eventData.start) {
         const [d, t] = eventData.start.split("T");
         el.startDate.value = d;
@@ -81,17 +76,25 @@ if (eventParam) {
         el.endDate.value = d;
         el.endTime.value = t || "10:00";
       }
-// 「event」に強制上書きする
+
+      // 3. 種別の判定ロジック
       if (el.eventType) {
-        console.log("Forcing UI to 'event' despite AI inference:", eventData.type);
-        el.eventType.value = "event"; 
+        if (isAutoTodoEnabled) {
+          // 自動判別が有効な場合は AI の結果を反映
+          el.eventType.value = eventData.type === "todo" ? "todo" : "event";
+        } else {
+          // 無効な場合は常に 'event' (予定) に固定
+          el.eventType.value = "event";
+        }
+        console.log(`Entry type set to: ${el.eventType.value} (AutoTodo: ${isAutoTodoEnabled})`);
       }
+
       el.isAllDay.dispatchEvent(new Event('change'));
       
     } catch (e) {
       console.error("JSON解析エラー", e);
     }
-  }
+  }    
 
   // --- 4. カレンダー一覧取得 --- (省略: 変更なし)
   try {
