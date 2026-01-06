@@ -57,10 +57,13 @@ if (eventParam) {
       const eventData = JSON.parse(decodeURIComponent(eventParam));
       
       // 基本は "event" をデフォルトとし、AIが明確に "todo" を指定した時のみ反映
+//      if (el.eventType) {
+//        el.eventType.value = (eventData.type === "todo") ? "todo" : "event";
+//      }
+     // AIの判定結果に関わらず、初期値は常に 'event' (予定) に固定
       if (el.eventType) {
-        el.eventType.value = (eventData.type === "todo") ? "todo" : "event";
+        el.eventType.value = "event"; 
       }
-
       el.title.value = eventData.title || "";
       el.location.value = eventData.location || "";
       el.description.value = eventData.description || "";    
