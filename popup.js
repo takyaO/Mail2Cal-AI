@@ -60,20 +60,16 @@ if (eventParam) {
 //      if (el.eventType) {
 //        el.eventType.value = (eventData.type === "todo") ? "todo" : "event";
 //      }
-     // AIの判定結果に関わらず、初期値は常に 'event' (予定) に固定
-      if (el.eventType) {
-        el.eventType.value = "event"; 
-      }
+
       el.title.value = eventData.title || "";
       el.location.value = eventData.location || "";
       el.description.value = eventData.description || "";    
-
-      // ★AIからの判定 (event or todo) を反映
-      if (el.eventType && eventData.type) {
-        el.eventType.value = eventData.type;
-      }
-
       el.isAllDay.checked = !!eventData.isAllDay;
+
+// 種別フィールドが存在する場合、一旦AIの値をセット（内部データ保持のため）
+      if (el.eventType) {
+        el.eventType.value = eventData.type || "event";
+      }
 
       if (eventData.start) {
         const [d, t] = eventData.start.split("T");
@@ -85,7 +81,11 @@ if (eventParam) {
         el.endDate.value = d;
         el.endTime.value = t || "10:00";
       }
-
+// 「event」に強制上書きする
+      if (el.eventType) {
+        console.log("Forcing UI to 'event' despite AI inference:", eventData.type);
+        el.eventType.value = "event"; 
+      }
       el.isAllDay.dispatchEvent(new Event('change'));
       
     } catch (e) {
