@@ -8,6 +8,17 @@
     .field { margin-bottom: 10px; }
     label { font-weight: bold; display: block; margin-bottom: 3px; }
     input, select, textarea { width: 100%; box-sizing: border-box; padding: 5px; }
+    
+    /* 日付と時刻を横並びにするスタイル */
+    .datetime-container { display: flex; gap: 5px; }
+    .datetime-container input[type="date"] { flex: 2; }
+    .datetime-container input[type="time"] { flex: 1; }
+
+    /* 終日チェックボックスのスタイル */
+    .all-day-container { margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
+    .all-day-container input { width: auto; margin: 0; cursor: pointer; }
+    .all-day-container label { display: inline; cursor: pointer; font-weight: normal; }
+
     #registerBtn { 
       background: #0078d7; color: white; border: none; padding: 10px; 
       width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px;
@@ -23,14 +34,25 @@
     <input type="text" id="title">
   </div>
 
+  <div class="all-day-container">
+    <input type="checkbox" id="isAllDay">
+    <label for="isAllDay"><span data-i18n="labelAllDay">終日の予定</span></label>
+  </div>
+  
   <div class="field">
     <label data-i18n="labelStart">開始日時</label>
-    <input type="datetime-local" id="start">
+    <div class="datetime-container">
+      <input type="date" id="startDate">
+      <input type="time" id="startTime">
+    </div>
   </div>
 
   <div class="field">
     <label data-i18n="labelEnd">終了日時</label>
-    <input type="datetime-local" id="end">
+    <div class="datetime-container">
+      <input type="date" id="endDate">
+      <input type="time" id="endTime">
+    </div>
   </div>
 
   <div class="field">

@@ -143,17 +143,38 @@ async function handleAddEvent(msg, sendResponse) {
     const systemTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const authHeader = "Basic " + btoa(unescape(encodeURIComponent(`${auth.username}:${auth.password}`)));
     const uid = crypto.randomUUID();
-    const f = (s) => s.replace(/[-:]/g, "") + "00";
+
+    // 時刻フォーマット補助 (YYYYMMDDTHHmm00)
+    const f = (s) => s.replace(/[-:]/g, "").replace(".000Z", "") + "00";
+
+    let dtStartLine, dtEndLine;
+
+    if (eventData.isAllDay) {
+      // --- 終日予定の場合 ---
+      // フォーマット: YYYYMMDD (時刻・タイムゾーンなし)
+      const startDateStr = eventData.start.split('T')[0].replace(/-/g, "");
+      dtStartLine = `DTSTART;VALUE=DATE:${startDateStr}`;
+
+      // ICSのルール: 終日予定のDTENDは「終了日の翌日」にする必要がある
+      const endDate = new Date(eventData.end);
+      endDate.setDate(endDate.getDate() + 1);
+      const endDateStr = endDate.toISOString().split('T')[0].replace(/-/g, "");
+      dtEndLine = `DTEND;VALUE=DATE:${endDateStr}`;
+    } else {
+      // --- 通常予定の場合 ---
+      dtStartLine = `DTSTART;TZID=${systemTimeZone}:${f(eventData.start)}`;
+      dtEndLine = `DTEND;TZID=${systemTimeZone}:${f(eventData.end)}`;
+    }
 
     const icsData = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Mail2Cal//NONSGML v1.1//EN",
+      "PRODID:-//Mail2Cal//NONSGML v1.2//EN",
       "BEGIN:VEVENT",
       `UID:${uid}`,
       `SUMMARY:${eventData.title}`,
-      `DTSTART;TZID=${systemTimeZone}:${f(eventData.start)}`,
-      `DTEND;TZID=${systemTimeZone}:${f(eventData.end)}`,
+      dtStartLine,
+      dtEndLine,
       `LOCATION:${eventData.location || ""}`,
       `DESCRIPTION:${(eventData.description || "").replace(/\n/g, "\\n")}`,
       "END:VEVENT",

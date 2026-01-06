@@ -12,8 +12,11 @@
   
   const el = {
     title: getEl("title"),
-    start: getEl("start"),
-    end: getEl("end"),
+    isAllDay: getEl("isAllDay"),      // 追加
+    startDate: getEl("startDate"),    // start から分離
+    startTime: getEl("startTime"),    // start から分離
+    endDate: getEl("endDate"),        // end から分離
+    endTime: getEl("endTime"),        // end から分離
     location: getEl("location"),
     description: getEl("description"),
     calendarSelect: getEl("calendarSelect"),
@@ -23,6 +26,7 @@
   // 翻訳の適用
   applyI18n();
 
+  // 要素チェック
   for (const [key, value] of Object.entries(el)) {
     if (!value) {
       console.error(`要素が見つかりません: id="${key}"`);
@@ -30,7 +34,30 @@
     }
   }
 
-  // --- 2. URL引数からイベントデータを解析して表示 ---
+  // --- 2. 終日チェックボックスの連動ロジック ---
+  el.isAllDay.addEventListener("change", () => {
+    const checked = el.isAllDay.checked;
+    el.startTime.disabled = checked;
+    el.endTime.disabled = checked;
+
+    if (checked) {
+      el.endDate.value = el.startDate.value; // 終了日を開始日に合わせる
+      el.startTime.style.opacity = "0.5";
+      el.endTime.style.opacity = "0.5";
+    } else {
+      el.startTime.style.opacity = "1";
+      el.endTime.style.opacity = "1";
+    }
+  });
+
+  // 開始日を変えたら、終日設定時のみ終了日も追従させる
+  el.startDate.addEventListener("change", () => {
+    if (el.isAllDay.checked) {
+      el.endDate.value = el.startDate.value;
+    }
+  });
+
+  // --- 3. URL引数からデータを解析して表示 ---
   const urlParams = new URLSearchParams(window.location.search);
   const eventParam = urlParams.get("event");
   
@@ -38,16 +65,33 @@
     try {
       const eventData = JSON.parse(decodeURIComponent(eventParam));
       el.title.value = eventData.title || "";
-      el.start.value = eventData.start || ""; 
-      el.end.value = eventData.end || "";
       el.location.value = eventData.location || "";
       el.description.value = eventData.description || "";
+      
+      // AIからの isAllDay 指定を反映（あれば）
+      el.isAllDay.checked = !!eventData.isAllDay;
+
+      // 日時を Date と Time に分割してセット
+      if (eventData.start) {
+        const [d, t] = eventData.start.split("T");
+        el.startDate.value = d;
+        el.startTime.value = t || "09:00";
+      }
+      if (eventData.end) {
+        const [d, t] = eventData.end.split("T");
+        el.endDate.value = d;
+        el.endTime.value = t || "10:00";
+      }
+
+      // 初期状態の表示制御をキック
+      el.isAllDay.dispatchEvent(new Event('change'));
+      
     } catch (e) {
       console.error("JSON解析エラー", e);
     }
   }
 
-  // --- 3. カレンダー一覧をバックグラウンドから取得 ---
+  // --- 4. カレンダー一覧取得 (略) ---
   try {
     const resp = await browser.runtime.sendMessage({ type: "getCalendars" });
     if (resp && resp.calendars && resp.calendars.length > 0) {
@@ -59,27 +103,28 @@
       });
     } else {
       const opt = document.createElement("option");
-      // 辞書から「カレンダーを登録してください」を取得
       opt.textContent = browser.i18n.getMessage("noCalendarWarning");
       el.calendarSelect.appendChild(opt);
       el.registerBtn.disabled = true;
     }
-  } catch (e) {
-    console.error("カレンダー取得失敗", e);
-  }
+  } catch (e) { console.error(e); }
 
-  // --- 4. 登録ボタンのイベント ---
+  // --- 5. 登録ボタンのイベント ---
   el.registerBtn.addEventListener("click", async () => {
     el.registerBtn.disabled = true;
-    // 「登録中...」を多言語化
     el.registerBtn.textContent = browser.i18n.getMessage("registeringStatus");
 
+    const isAllDay = el.isAllDay.checked;
+    
+    // background.js へ送るデータの構築
     const updatedEvent = {
       title: el.title.value,
-      start: el.start.value,
-      end: el.end.value,
+      // 終日なら YYYY-MM-DD のみ、時間指定なら YYYY-MM-DDTHH:MM
+      start: isAllDay ? el.startDate.value : `${el.startDate.value}T${el.startTime.value}`,
+      end: isAllDay ? el.endDate.value : `${el.endDate.value}T${el.endTime.value}`,
       location: el.location.value,
-      description: el.description.value
+      description: el.description.value,
+      isAllDay: isAllDay
     };
 
     try {
@@ -99,7 +144,6 @@
       alert(browser.i18n.getMessage("communicationError"));
     } finally {
       el.registerBtn.disabled = false;
-      // 元のボタンテキストに戻す
       el.registerBtn.textContent = browser.i18n.getMessage("registerBtn");
     }
   });
