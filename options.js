@@ -27,7 +27,6 @@ async function getDefaultsWithRetry(retries = 3) {
   }
 }
 
-// --- initOptions 関数内の修正 ---
 async function initOptions() {
   try {
     applyI18n();
@@ -37,25 +36,36 @@ async function initOptions() {
       settings = await getDefaultsWithRetry();
     }
 
-    document.getElementById("ollamaUrl").value = settings.ollamaUrl || "";
-    document.getElementById("ollamaModel").value = settings.ollamaModel || "";
-    document.getElementById("ollamaPrompt").value = settings.ollamaPrompt || "";
-    
-    // --- 追加：autoTodo の読み込み (デフォルトは false/OFF とする例) ---
-    document.getElementById("autoTodo").checked = !!settings.autoTodo;
-
-    if (settings.calendarList) {
-      document.getElementById("calendarList").value = JSON.stringify(settings.calendarList, null, 2);
+    const promptEl = document.getElementById("ollamaPrompt");
+    if (promptEl) {
+      promptEl.value = settings.ollamaPrompt || "";
     }
-    
-    if (settings.username) document.getElementById("username").value = settings.username;
-    if (settings.password) document.getElementById("password").value = settings.password;
 
-    // ... (resetBtn の処理などはそのまま) ...
+    // ===============================
+    // reset ボタン（完全版）
+    // ===============================
+    const resetBtn = document.getElementById("resetPromptButton");
+    if (resetBtn && !resetBtn.dataset.bound) {
+      resetBtn.dataset.bound = "true"; // 二重登録防止
+
+      resetBtn.addEventListener("click", async () => {
+        try {
+          const defaults = await getDefaultsWithRetry();
+
+          promptEl.value = defaults.ollamaPrompt || "";
+
+          // ★ storage も即リセット（推奨）
+          await browser.storage.local.set({
+            ollamaPrompt: defaults.ollamaPrompt
+          });
+        } catch (e) {
+          console.error("Prompt reset failed:", e);
+        }
+      });
+    }
 
   } catch (error) {
     console.error("Failed to load settings:", error);
-    alert(browser.i18n.getMessage("errorLoadSettings") || "Failed to load settings.");
   }
 }
 
@@ -83,6 +93,7 @@ document.getElementById("save").addEventListener("click", async () => {
 });
 
 // 初期化実行
-initOptions();
-
-
+//initOptions();
+document.addEventListener("DOMContentLoaded", () => {
+  initOptions();
+});

@@ -47,10 +47,13 @@ browser.runtime.onStartup.addListener(initSettings);
 // メッセージリスナー
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "getDefaultSettings") {
-    sendResponse(DEFAULT_SETTINGS);
+    sendResponse({
+      ...DEFAULT_SETTINGS,
+      ollamaPrompt: browser.i18n.getMessage("defaultAiPrompt")
+    });
     return false;
   }
-  
+
   if (msg.type === "getCalendars") {
     browser.storage.local.get("calendarList").then(data => {
       sendResponse({ calendars: data.calendarList || [] });
