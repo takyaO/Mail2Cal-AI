@@ -30,31 +30,64 @@ async function getDefaultsWithRetry(retries = 3) {
 async function initOptions() {
   try {
     applyI18n();
-    let settings = await browser.storage.local.get();
+    
+    // 全ての項目を取得（未保存時のデフォルト値もここで指定しておくと安全です）
+    let settings = await browser.storage.local.get({
+      ollamaUrl: "http://127.0.0.1:11434",
+      ollamaModel: "qwen2.5:7b",
+      ollamaPrompt: "",
+      calendarList: [],
+      username: "",
+      password: "",
+      autoTodo: false
+    });
 
+    // プロンプトやリストが空の場合のリカバリ
     if (!settings.ollamaPrompt || !settings.calendarList || settings.calendarList.length === 0) {
-      settings = await getDefaultsWithRetry();
+      const defaults = await getDefaultsWithRetry();
+      // 取得したデフォルト値で上書き
+      settings = { ...settings, ...defaults };
     }
 
+    // --- 各入力欄に値を反映させる (ここが不足していました) ---
+    if (document.getElementById("ollamaUrl")) {
+      document.getElementById("ollamaUrl").value = settings.ollamaUrl;
+    }
+    if (document.getElementById("ollamaModel")) {
+      document.getElementById("ollamaModel").value = settings.ollamaModel;
+    }
+    if (document.getElementById("username")) {
+      document.getElementById("username").value = settings.username;
+    }
+    if (document.getElementById("password")) {
+      document.getElementById("password").value = settings.password;
+    }
+    if (document.getElementById("autoTodo")) {
+      document.getElementById("autoTodo").checked = settings.autoTodo;
+    }
+
+    // プロンプトの反映
     const promptEl = document.getElementById("ollamaPrompt");
     if (promptEl) {
       promptEl.value = settings.ollamaPrompt || "";
     }
 
+    // カレンダーリスト（オブジェクト/配列をJSON文字列に変換して表示）
+    const calendarEl = document.getElementById("calendarList");
+    if (calendarEl) {
+      calendarEl.value = JSON.stringify(settings.calendarList, null, 2); 
+    }
+
     // ===============================
-    // reset ボタン（完全版）
+    // reset ボタン（既存の処理）
     // ===============================
     const resetBtn = document.getElementById("resetPromptButton");
     if (resetBtn && !resetBtn.dataset.bound) {
-      resetBtn.dataset.bound = "true"; // 二重登録防止
-
+      resetBtn.dataset.bound = "true";
       resetBtn.addEventListener("click", async () => {
         try {
           const defaults = await getDefaultsWithRetry();
-
-          promptEl.value = defaults.ollamaPrompt || "";
-
-          // ★ storage も即リセット（推奨）
+          if (promptEl) promptEl.value = defaults.ollamaPrompt || "";
           await browser.storage.local.set({
             ollamaPrompt: defaults.ollamaPrompt
           });
