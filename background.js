@@ -72,6 +72,10 @@ browser.menus.create({
   id: "mail-to-cal-ai",
   title: browser.i18n.getMessage("contextMenuTitle"),
   contexts: ["all"]
+  icons: {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png"
+  }
 });
 
 browser.menus.onClicked.addListener(async (info, tab) => {
