@@ -27,6 +27,7 @@
   </style>
 </head>
 <body>
+  <div id="formContainer">  
   <h3 data-i18n="popupHeader">📅 予定の確認</h3>
   
   <div class="field">
@@ -79,7 +80,14 @@
   </div>
 
   <button id="registerBtn" data-i18n="registerBtn">登録</button>
+  </div>
 
+  <div id="noScheduleContainer" style="display:none; text-align: center; padding: 20px 0;">
+    <h3 data-i18n="noScheduleHeader">No Schedule Found</h3>
+    <p data-i18n="noScheduleDescription">予定を抽出できませんでした。</p>
+    <button id="closeBtn" style="width: 100%; padding: 10px; cursor: pointer;" data-i18n="closeBtn">閉じる</button>
+  </div>
+  
   <script src="popup.js"></script>
 </body>
 </html>

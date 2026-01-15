@@ -12,7 +12,7 @@
   
   const el = {
     title: getEl("title"),
-    eventType: getEl("eventType"),    // ★追加: 予定/タスク切り替え用
+    eventType: getEl("eventType"),
     isAllDay: getEl("isAllDay"),
     startDate: getEl("startDate"),
     startTime: getEl("startTime"),
@@ -21,42 +21,59 @@
     location: getEl("location"),
     description: getEl("description"),
     calendarSelect: getEl("calendarSelect"),
-    registerBtn: getEl("registerBtn")
+    registerBtn: getEl("registerBtn"),
+    // 追加要素
+    formContainer: getEl("formContainer"),
+    noScheduleContainer: getEl("noScheduleContainer"),
+    closeBtn: getEl("closeBtn")      
   };
 
   applyI18n();
 
-  // --- 2. 終日チェックボックスの連動ロジック ---
-  el.isAllDay.addEventListener("change", () => {
-    const checked = el.isAllDay.checked;
-    el.startTime.disabled = checked;
-    el.endTime.disabled = checked;
-
-    if (checked) {
-      el.endDate.value = el.startDate.value;
-      el.startTime.style.opacity = "0.5";
-      el.endTime.style.opacity = "0.5";
-    } else {
-      el.startTime.style.opacity = "1";
-      el.endTime.style.opacity = "1";
-    }
-  });
-
-  el.startDate.addEventListener("change", () => {
-    if (el.isAllDay.checked) {
-      el.endDate.value = el.startDate.value;
-    }
-  });
-
-  // --- 3. URL引数からデータを解析して表示 ---
+  // --- 2. URL引数の解析 (ここで1回だけ宣言) ---
   const urlParams = new URLSearchParams(window.location.search);
-  const eventParam = urlParams.get("event");
 
+  // 【予定なしモードの判定】
+  if (urlParams.get("none") === "1") {
+    if (el.formContainer) el.formContainer.style.display = "none";
+    if (el.noScheduleContainer) el.noScheduleContainer.style.display = "block";
+    if (el.closeBtn) {
+      el.closeBtn.addEventListener("click", () => window.close());
+    }
+    return; // 予定がない場合はここで完全に終了
+  }
+
+  // --- 3. イベントリスナー登録 (予定がある場合のみ実行) ---
+  if (el.isAllDay) {
+    el.isAllDay.addEventListener("change", () => {
+      const checked = el.isAllDay.checked;
+      el.startTime.disabled = checked;
+      el.endTime.disabled = checked;
+      if (checked) {
+        el.endDate.value = el.startDate.value; 
+        el.startTime.style.opacity = "0.5";
+        el.endTime.style.opacity = "0.5";
+      } else {
+        el.startTime.style.opacity = "1";
+        el.endTime.style.opacity = "1";
+      }
+    });      
+  }
+
+  if (el.startDate) {
+    el.startDate.addEventListener("change", () => {
+      if (el.isAllDay && el.isAllDay.checked) {
+        el.endDate.value = el.startDate.value;
+      }
+    });
+  }
+
+  // --- 4. データのセット表示 ---
+  const eventParam = urlParams.get("event");
   if (eventParam) {
     try {
       const eventData = JSON.parse(decodeURIComponent(eventParam));
-
-      // 1. 設定を読み込む (autoTodoが未設定の場合はデフォルト false/OFF)
+      // ... (以下、既存のデータセット処理) ...
       const res = await browser.storage.local.get("autoTodo");
       const isAutoTodoEnabled = !!res.autoTodo;
 
@@ -65,7 +82,6 @@
       el.description.value = eventData.description || "";    
       el.isAllDay.checked = !!eventData.isAllDay;
 
-      // 2. 日時セット処理
       if (eventData.start) {
         const [d, t] = eventData.start.split("T");
         el.startDate.value = d;
@@ -77,24 +93,15 @@
         el.endTime.value = t || "10:00";
       }
 
-      // 3. 種別の判定ロジック
       if (el.eventType) {
-        if (isAutoTodoEnabled) {
-          // 自動判別が有効な場合は AI の結果を反映
-          el.eventType.value = eventData.type === "todo" ? "todo" : "event";
-        } else {
-          // 無効な場合は常に 'event' (予定) に固定
-          el.eventType.value = "event";
-        }
-        console.log(`Entry type set to: ${el.eventType.value} (AutoTodo: ${isAutoTodoEnabled})`);
+        el.eventType.value = isAutoTodoEnabled && eventData.type === "todo" ? "todo" : "event";
       }
 
       el.isAllDay.dispatchEvent(new Event('change'));
-      
     } catch (e) {
       console.error("JSON解析エラー", e);
     }
-  }    
+  }
 
   // --- 4. カレンダー一覧取得 --- (省略: 変更なし)
   try {
@@ -154,3 +161,4 @@
     }
   });
 })();
+

@@ -108,14 +108,19 @@ browser.menus.onClicked.addListener(async (info, tab) => {
     });
 
   } catch (err) {
-    if (err.message === "NO_SCHEDULE_FOUND") {
-      // 予定がない場合はエラーにせず、静かに終了
-      console.log("Mail2Cal: No schedule found in this email.");
+    if (err.message === "NO_SCHEDULE_FOUND" || err.message === "JSON Object not found") {
+      // 予定がない、または解析不能な場合もポップアップを表示する
+      browser.windows.create({
+        url: browser.runtime.getURL("popup.html") + "?none=1",
+        type: "popup",
+        width: 450,
+        height: 300 // 予定なしメッセージだけなので低めでOK
+      });
+      console.log("Mail2Cal: Notification popup opened for 'No schedule'.");
     } else {
-      // それ以外の予期せぬエラー（通信エラー等）はコンソールに詳細を出力
       console.error("Main Flow Error:", err);
+      // 通信エラーなどの深刻な場合は、タイトルで状況がわかるようにするなどの工夫も
     }
-    // 権限エラーを避けるため、alert等は実行しない
   }
 });
 
@@ -139,7 +144,8 @@ async function sendToOllama(mailData) {
     body: JSON.stringify({
       model: config.ollamaModel,
       prompt: prompt,
-      stream: false
+      stream: false,
+      format: "json"	
     })
   });
 
@@ -284,34 +290,40 @@ function stripHtml(html) {
 
 function extractJSON(text) {
   try {
-    const trimmed = text.trim();
-    if (trimmed === "[]" || trimmed === "" || trimmed === "{}") {
-      throw new Error("NO_SCHEDULE_FOUND"); // 予定なし専用のエラー
-    }
-
-    // 1. Markdownのコードフェンスを除去
-    const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    let jsonPart = fenceMatch ? fenceMatch[1] : text;
-    jsonPart = jsonPart.trim();
-
-    // 2. 配列形式なら最初の要素をパース
-    if (jsonPart.startsWith('[') && jsonPart.endsWith(']')) {
-      const parsedArray = JSON.parse(jsonPart);
-      if (Array.isArray(parsedArray) && parsedArray.length > 0) {
-        return parsedArray[0];
-      }
+    if (!text || text.trim() === "" || text.trim() === "[]" || text.trim() === "{}") {
       throw new Error("NO_SCHEDULE_FOUND");
     }
 
-    // 3. オブジェクト抽出
-    const start = jsonPart.indexOf('{');
-    const end = jsonPart.lastIndexOf('}');
-    if (start === -1 || end === -1) throw new Error("JSON Object not found");
+    // 1. Markdownコードフェンス (```json ... ```) の中身を優先抽出
+    const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    let candidate = fenceMatch ? fenceMatch[1] : text;
 
-    return JSON.parse(jsonPart.substring(start, end + 1));
+    // 2. 「最初に見つかる [ か { 」から「最後に見つかる ] か } 」までを切り出す
+    // これにより、前後の説明文やXMLタグを無視してJSON本体だけを狙い撃ちします
+    const startBracket = candidate.search(/[\[\{]/);
+    const endBracket = Math.max(candidate.lastIndexOf(']'), candidate.lastIndexOf('}'));
+
+    if (startBracket === -1 || endBracket === -1 || endBracket < startBracket) {
+      // JSONの括弧が全くない場合（今回のケース）
+      console.error("No JSON brackets found. Raw text:", text);
+      throw new Error("JSON Object not found");
+    }
+
+    const jsonPart = candidate.substring(startBracket, endBracket + 1).trim();
+
+    // 3. パース実行
+    const parsed = JSON.parse(jsonPart);
+
+    // 4. 配列で返ってきた場合、空ならエラー、中身があれば最初の要素を返す（既存ロジック継承）
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) throw new Error("NO_SCHEDULE_FOUND");
+      return parsed[0]; // 複数予定に対応させるならここを return parsed に変更
+    }
+
+    return parsed;
   } catch (e) {
     console.error("JSON Parsing Failed. Raw text was:", text);
-    throw e; // 上位に投げる
+    throw e;
   }
 }
 
