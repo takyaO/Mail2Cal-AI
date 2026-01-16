@@ -72,7 +72,7 @@
   const eventParam = urlParams.get("event");
   if (eventParam) {
     try {
-      const eventData = JSON.parse(decodeURIComponent(eventParam));
+      const eventData = JSON.parse(eventParam);
       // ... (以下、既存のデータセット処理) ...
       const res = await browser.storage.local.get("autoTodo");
       const isAutoTodoEnabled = !!res.autoTodo;

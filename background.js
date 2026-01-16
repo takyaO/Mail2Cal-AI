@@ -103,7 +103,7 @@ browser.menus.onClicked.addListener(async (info, tab) => {
     browser.windows.create({
       url: browser.runtime.getURL("popup.html") + `?event=${encodeURIComponent(JSON.stringify(eventData))}`,
       type: "popup",
-      width: 450,
+      width: 470,
       height: 600
     });
 
@@ -113,8 +113,8 @@ browser.menus.onClicked.addListener(async (info, tab) => {
       browser.windows.create({
         url: browser.runtime.getURL("popup.html") + "?none=1",
         type: "popup",
-        width: 450,
-        height: 300 // 予定なしメッセージだけなので低めでOK
+        width: 470,
+        height: 260 // 予定なしメッセージだけなので低めでOK
       });
       console.log("Mail2Cal: Notification popup opened for 'No schedule'.");
     } else {
