@@ -3,7 +3,7 @@ console.log("Mail2Cal: Background Script Loading...");
 
 // プロンプト以外の、言語に依存しないデフォルト値
 const DEFAULT_SETTINGS = {
-  ollamaUrl: "http://100.127.x.y:11434",
+  ollamaUrl: "http://127.0.0.1:11434",
   ollamaModel: "qwen2.5:7b",
   calendarList: [
     { "id": "http://example.com/dav/personal/", "name": "Default Calendar" }

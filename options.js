@@ -104,15 +104,24 @@ async function initOptions() {
 
 document.getElementById("save").addEventListener("click", async () => {
   try {
+    // ★ 追加：保存時に権限をリクエストする
+    // これにより、ブラウザが「このアドオンに全サイトへのアクセスを許可しますか？」というダイアログを出します。
+    const granted = await browser.permissions.request({
+      origins: ["<all_urls>"]
+    });
+
+    if (!granted) {
+      // ユーザーがキャンセルした場合は保存を中断するか、警告を出す
+      alert("Permission denied. The add-on may not be able to connect to Ollama or CalDAV.");
+      return; 
+    }
+
     const calendarListRaw = document.getElementById("calendarList").value;
     const newSettings = {
       ollamaUrl: document.getElementById("ollamaUrl").value,
       ollamaModel: document.getElementById("ollamaModel").value,
       ollamaPrompt: document.getElementById("ollamaPrompt").value,
-      
-      // --- 追加：autoTodo の値を保存 ---
       autoTodo: document.getElementById("autoTodo").checked,
-
       calendarList: JSON.parse(calendarListRaw || "[]"),
       username: document.getElementById("username").value,
       password: document.getElementById("password").value
