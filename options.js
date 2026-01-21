@@ -102,27 +102,58 @@ async function initOptions() {
   }
 }
 
+// 保存ボタンのクリックイベント
 document.getElementById("save").addEventListener("click", async () => {
   try {
-    // ★ 追加：保存時に権限をリクエストする
-    // これにより、ブラウザが「このアドオンに全サイトへのアクセスを許可しますか？」というダイアログを出します。
-    const granted = await browser.permissions.request({
-      origins: ["<all_urls>"]
+    const ollamaUrl = document.getElementById("ollamaUrl").value;
+    const calendarListRaw = document.getElementById("calendarList").value;
+    const calendars = JSON.parse(calendarListRaw || "[]");
+
+    // --- 1. 権限をリクエストするURLリスト（Origins）を作成 ---
+    const originsToRequest = [];
+
+    // URLから "http://hostname/*" 形式を作るヘルパー関数
+    const safeGetOrigin = (urlString) => {
+      try {
+        const url = new URL(urlString);
+        // 末尾を /* にすることで、そのドメイン内の全パスを許可対象にする
+        return `${url.protocol}//${url.hostname}/*`;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    // OllamaのURLを追加
+    const ollamaOrigin = safeGetOrigin(ollamaUrl);
+    if (ollamaOrigin) originsToRequest.push(ollamaOrigin);
+
+    // カレンダーリストにある全てのURLを追加
+    calendars.forEach(cal => {
+      const origin = safeGetOrigin(cal.url);
+      if (origin && !originsToRequest.includes(origin)) {
+        originsToRequest.push(origin);
+      }
     });
 
-    if (!granted) {
-      // ユーザーがキャンセルした場合は保存を中断するか、警告を出す
-      alert("Permission denied. The add-on may not be able to connect to Ollama or CalDAV.");
-      return; 
+    // --- 2. 特定のドメインに対してのみ権限をリクエスト ---
+    if (originsToRequest.length > 0) {
+      const granted = await browser.permissions.request({
+        origins: originsToRequest
+      });
+
+      if (!granted) {
+        alert("Permission denied. The add-on may not be able to connect to the specified servers.");
+        // ここで return するかは任意ですが、Johnの意図を汲むなら保存前に警告を出すのがベストです
+      }
     }
 
-    const calendarListRaw = document.getElementById("calendarList").value;
+    // --- 3. 設定の保存処理 ---
     const newSettings = {
-      ollamaUrl: document.getElementById("ollamaUrl").value,
+      ollamaUrl: ollamaUrl,
       ollamaModel: document.getElementById("ollamaModel").value,
       ollamaPrompt: document.getElementById("ollamaPrompt").value,
       autoTodo: document.getElementById("autoTodo").checked,
-      calendarList: JSON.parse(calendarListRaw || "[]"),
+      calendarList: calendars,
       username: document.getElementById("username").value,
       password: document.getElementById("password").value
     };
@@ -135,7 +166,7 @@ document.getElementById("save").addEventListener("click", async () => {
 });
 
 // 初期化実行
-//initOptions();
 document.addEventListener("DOMContentLoaded", () => {
   initOptions();
 });
+
