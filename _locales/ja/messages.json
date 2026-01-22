@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "メールからカレンダー登録 AI"
+    "message": "Mail2Cal-AI"
   },
   "extensionDescription": {
     "message": "ローカルAI(Ollama)を使用してメールから予定を抽出し、CalDAVに登録します。"

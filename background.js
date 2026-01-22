@@ -70,6 +70,11 @@ browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // コンテキストメニュー作成
 browser.menus.create({
   id: "mail-to-cal-ai",
+  title: "Mail to Calendar AI",
+  contexts: ["selection", "message_display_action", "page"] // "selection" が必須
+});
+browser.menus.create({
+  id: "mail-to-cal-ai",
   title: browser.i18n.getMessage("contextMenuTitle"),
   contexts: ["all"],
   icons: {
@@ -85,21 +90,31 @@ browser.menus.onClicked.addListener(async (info, tab) => {
     const message = await browser.messageDisplay.getDisplayedMessage(tab.id);
     const full = await browser.messages.getFull(message.id);
     
+    // --- 選択テキストの取得ロジック ---
+    // 選択範囲があればそれを使用し、なければ従来の全文抽出を行う
+    let targetBody = "";
+    if (info.selectionText && info.selectionText.trim().length > 0) {
+      targetBody = info.selectionText.trim();
+      console.log("Using selected text for analysis.");
+    } else {
+      targetBody = (extractBody(full) || "").trim();
+      console.log("No selection found. Using full message body.");
+    }
+
     const mailData = {
       subject: message.subject,
       from: message.author,
       date: new Date(message.date),
-      body: (extractBody(full) || "").trim()
+      body: targetBody // 選択範囲または全文が入る
     };
 
     console.log("Processing with LLM...");
     const raw = await sendToOllama(mailData);
     
-    // ここで空配列 [] 等だと例外が投げられる
     const llmJson = extractJSON(raw);
     const eventData = normalizeEvent(llmJson, mailData);
 
-    // 正常に抽出できた場合のみ、ウィンドウを作成
+    // ウィンドウを作成（成功時）
     browser.windows.create({
       url: browser.runtime.getURL("popup.html") + `?event=${encodeURIComponent(JSON.stringify(eventData))}`,
       type: "popup",

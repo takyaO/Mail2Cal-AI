@@ -109,41 +109,40 @@ document.getElementById("save").addEventListener("click", async () => {
     const calendarListRaw = document.getElementById("calendarList").value;
     const calendars = JSON.parse(calendarListRaw || "[]");
 
-    // --- 1. 権限をリクエストするURLリスト（Origins）を作成 ---
+    // --- 1. 権限リクエスト用リストを作成 ---
     const originsToRequest = [];
 
-    // URLから "http://hostname/*" 形式を作るヘルパー関数
     const safeGetOrigin = (urlString) => {
       try {
         const url = new URL(urlString);
-        // 末尾を /* にすることで、そのドメイン内の全パスを許可対象にする
-        return `${url.protocol}//${url.hostname}/*`;
-      } catch (e) {
-        return null;
-      }
+        return `${url.protocol}//${url.hostname}${url.port ? ':' + url.port : ''}/*`;
+      } catch (e) { return null; }
     };
 
-    // OllamaのURLを追加
+    // Ollama URL を追加
     const ollamaOrigin = safeGetOrigin(ollamaUrl);
     if (ollamaOrigin) originsToRequest.push(ollamaOrigin);
 
-    // カレンダーリストにある全てのURLを追加
-    calendars.forEach(cal => {
-      const origin = safeGetOrigin(cal.url);
-      if (origin && !originsToRequest.includes(origin)) {
-        originsToRequest.push(origin);
+    // JSON内の全カレンダーURLをループして追加
+      calendars.forEach((cal, index) => {
+      // JSONのキーが "id" なので、cal.id を参照する
+      console.log(`Checking calendar ${index}:`, cal.id); 
+      const cOrigin = safeGetOrigin(cal.id);
+      if (cOrigin && !originsToRequest.includes(cOrigin)) {
+        originsToRequest.push(cOrigin);
       }
     });
 
-    // --- 2. 特定のドメインに対してのみ権限をリクエスト ---
+    // --- 2. まとめて権限リクエスト ---
     if (originsToRequest.length > 0) {
+      console.log("Requesting permissions for:", originsToRequest);
       const granted = await browser.permissions.request({
         origins: originsToRequest
       });
 
       if (!granted) {
-        alert("Permission denied. The add-on may not be able to connect to the specified servers.");
-        // ここで return するかは任意ですが、Johnの意図を汲むなら保存前に警告を出すのがベストです
+        alert("Permission denied. Some servers may not be accessible.");
+        // 開発時はここで return せず、どこまで進めるか試すのもアリです
       }
     }
 
