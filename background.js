@@ -89,7 +89,9 @@ browser.menus.onClicked.addListener(async (info, tab) => {
   try {
     const message = await browser.messageDisplay.getDisplayedMessage(tab.id);
     const full = await browser.messages.getFull(message.id);
-    
+    const cleanMsgId = (message.headerMessageId || "").replace(/[<>]/g, "");
+    const mailLink = cleanMsgId ? `mid:${cleanMsgId}` : "N/A";
+      
     // --- 選択テキストの取得ロジック ---
     // 選択範囲があればそれを使用し、なければ従来の全文抽出を行う
     let targetBody = "";
@@ -105,7 +107,8 @@ browser.menus.onClicked.addListener(async (info, tab) => {
       subject: message.subject,
       from: message.author,
       date: new Date(message.date),
-      body: targetBody // 選択範囲または全文が入る
+      body: (extractBody(full) || "").trim(), 
+      messageId: cleanMsgId
     };
 
     console.log("Processing with LLM...");
@@ -350,7 +353,8 @@ function fixYear(date, mailDate) {
 }
 
 function buildDescription(mailData) {
-  return `${mailData.body}\n\n---\n[Mail-ID]\nFrom: ${mailData.from}\nSent: ${mailData.date.toLocaleString("ja-JP")} JST\nSubject: ${mailData.subject}`.trim();
+    const mailLink = `mid:${mailData.messageId}`;
+    return `${mailData.body}\n\n---\n${mailLink}\nFrom: ${mailData.from}\nSent: ${mailData.date.toLocaleString("ja-JP")} JST\nSubject: ${mailData.subject}`.trim();
 }
 
 function toLocalISO(date) {

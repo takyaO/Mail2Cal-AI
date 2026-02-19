@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "applications": {
     "gecko": {
       "id": "{66e01eec-54e0-4757-806b-915cce7a577e}",
