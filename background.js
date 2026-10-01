@@ -155,7 +155,7 @@ async function sendToOllama(mailData) {
     .replace("{{body}}", mailData.body)
     .replace("{{date}}", dateStr)
     .replace("{{from}}", mailData.from);
-    
+
   const res = await fetch(`${config.ollamaUrl}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -163,13 +163,19 @@ async function sendToOllama(mailData) {
       model: config.ollamaModel,
       prompt: prompt,
       stream: false,
-      format: "json"	
+      format: "json",
+      think: false // Ollamaの思考プロセス生成をオフにする
     })
   });
 
   if (!res.ok) throw new Error("Ollama API Error: " + res.status);
   const json = await res.json();
-  return json.response;
+  
+  // 思考タグ(<think>や<thought>)が含まれている場合に除去してJSONのみ抽出
+  const rawResponse = json.response || "";
+  const cleanResponse = rawResponse.replace(/<(think|thought)>[\s\S]*?<\/(think|thought)>/gi, "").trim();
+
+  return cleanResponse;
 }
 
 // --- CalDAV登録 ---
